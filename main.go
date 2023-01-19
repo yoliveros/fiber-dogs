@@ -2,12 +2,16 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/google/uuid"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Dog struct {
+	gorm.Model
 	Id    string
 	Name  string
 	Owner string
@@ -15,15 +19,15 @@ type Dog struct {
 	Breed string
 }
 
+var Database *gorm.DB
+var DB_NAME = "dogs.db"
+
 func handleDog(c *fiber.Ctx) error {
-	dog := Dog{
-		Id:    "test-id",
-		Name:  "Kaiser",
-		Owner: "Yoel",
-		Age:   8,
-		Breed: "Golden Retriever",
-	}
-	return c.Status(fiber.StatusOK).JSON(dog)
+	var dogs []Dog
+
+	Database.Find(&dogs)
+
+	return c.Status(fiber.StatusOK).JSON(dogs)
 }
 
 func handleCreateDog(c *fiber.Ctx) error {
@@ -34,14 +38,24 @@ func handleCreateDog(c *fiber.Ctx) error {
 
 	dog.Id = uuid.NewString()
 
+	Database.Create(&dog)
+
 	return c.Status(fiber.StatusCreated).JSON(dog)
 }
 
 func main() {
+	// DB Connection
+	db, err := gorm.Open(sqlite.Open("dogs.db"), &gorm.Config{})
+	if err != nil {
+		panic("Failed to connect database")
+	}
+
+	db.AutoMigrate(&Dog{})
+
 	app := fiber.New()
 
 	// Middleware
-	app.Use(logger.New(), requestid.New())
+	app.Use(logger.New(), requestid.New(), cors.New())
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, world!")
