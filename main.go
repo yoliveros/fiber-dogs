@@ -45,7 +45,7 @@ func handleCreateDog(c *fiber.Ctx) error {
 
 func main() {
 	// DB Connection
-	db, err := gorm.Open(sqlite.Open("dogs.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(DB_NAME), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect database")
 	}
