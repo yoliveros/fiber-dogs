@@ -1,1 +1,1 @@
-# Go and Fiber test
+# REST API with Go, Fiber, Sqlite3 and gorm
