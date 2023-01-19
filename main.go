@@ -12,25 +12,25 @@ import (
 
 type Dog struct {
 	gorm.Model
-	Id    string
+	Id    string `gorm:"primarykey"`
 	Name  string
 	Owner string
 	Age   uint8
 	Breed string
 }
 
-var Database *gorm.DB
+var db *gorm.DB
 var DB_NAME = "dogs.db"
 
-func handleDog(c *fiber.Ctx) error {
+func getDog(c *fiber.Ctx) error {
 	var dogs []Dog
 
-	Database.Find(&dogs)
+	db.Find(&dogs)
 
 	return c.Status(fiber.StatusOK).JSON(dogs)
 }
 
-func handleCreateDog(c *fiber.Ctx) error {
+func addDog(c *fiber.Ctx) error {
 	dog := Dog{}
 	if err := c.BodyParser(&dog); err != nil {
 		return err
@@ -38,14 +38,39 @@ func handleCreateDog(c *fiber.Ctx) error {
 
 	dog.Id = uuid.NewString()
 
-	Database.Create(&dog)
+	db.Create(&dog)
 
 	return c.Status(fiber.StatusCreated).JSON(dog)
 }
 
+func updateDog(c *fiber.Ctx) error {
+	dog := Dog{}
+	id := c.Params("id")
+
+	if err := c.BodyParser(&dog); err != nil {
+		return err
+	}
+
+	db.Where("id = ?", id).Updates(&dog)
+	return c.Status(fiber.StatusOK).JSON(dog)
+}
+
+func deleteDog(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	result := db.Delete(&Dog{}, id)
+
+	if result.RowsAffected == 0 {
+		return c.SendStatus(fiber.StatusNotFound)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func main() {
 	// DB Connection
-	db, err := gorm.Open(sqlite.Open(DB_NAME), &gorm.Config{})
+	var err error
+	db, err = gorm.Open(sqlite.Open(DB_NAME), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect database")
 	}
@@ -62,8 +87,10 @@ func main() {
 	})
 
 	dogGroup := app.Group("/dogs")
-	dogGroup.Get("", handleDog)
-	dogGroup.Post("", handleCreateDog)
+	dogGroup.Get("", getDog)
+	dogGroup.Post("", addDog)
+	dogGroup.Patch("", updateDog)
+	dogGroup.Delete("", deleteDog)
 
 	app.Listen(":3000")
 }
