@@ -22,11 +22,10 @@ type Dog struct {
 var db *gorm.DB
 var DB_NAME = "dogs.db"
 
-func getDog(c *fiber.Ctx) error {
+func getDogs(c *fiber.Ctx) error {
 	var dogs []Dog
 
 	db.Find(&dogs)
-
 	return c.Status(fiber.StatusOK).JSON(dogs)
 }
 
@@ -39,7 +38,6 @@ func addDog(c *fiber.Ctx) error {
 	dog.Id = uuid.NewString()
 
 	db.Create(&dog)
-
 	return c.Status(fiber.StatusCreated).JSON(dog)
 }
 
@@ -87,7 +85,7 @@ func main() {
 	})
 
 	dogGroup := app.Group("/dogs")
-	dogGroup.Get("", getDog)
+	dogGroup.Get("", getDogs)
 	dogGroup.Post("", addDog)
 	dogGroup.Patch("", updateDog)
 	dogGroup.Delete("", deleteDog)
