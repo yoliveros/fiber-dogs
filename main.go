@@ -54,9 +54,12 @@ func updateDog(c *fiber.Ctx) error {
 }
 
 func deleteDog(c *fiber.Ctx) error {
+	dog := Dog{}
 	id := c.Params("id")
 
-	result := db.Delete(&Dog{}, id)
+	db.First(&dog, id)
+
+	result := db.Delete(&dog)
 
 	if result.RowsAffected == 0 {
 		return c.SendStatus(fiber.StatusNotFound)
@@ -87,8 +90,8 @@ func main() {
 	dogGroup := app.Group("/dogs")
 	dogGroup.Get("", getDogs)
 	dogGroup.Post("", addDog)
-	dogGroup.Patch("", updateDog)
-	dogGroup.Delete("", deleteDog)
+	dogGroup.Patch("/:id", updateDog)
+	dogGroup.Delete("/:id", deleteDog)
 
 	app.Listen(":3000")
 }
