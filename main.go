@@ -24,8 +24,8 @@ var DB_NAME = "dogs.db"
 
 func getDogs(c *fiber.Ctx) error {
 	var dogs []Dog
-
 	db.Find(&dogs)
+
 	return c.Status(fiber.StatusOK).JSON(dogs)
 }
 
@@ -57,9 +57,7 @@ func deleteDog(c *fiber.Ctx) error {
 	dog := Dog{}
 	id := c.Params("id")
 
-	db.First(&dog, id)
-
-	result := db.Delete(&dog)
+	result := db.Where("id=?", id).Delete(&dog)
 
 	if result.RowsAffected == 0 {
 		return c.SendStatus(fiber.StatusNotFound)
